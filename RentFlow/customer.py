@@ -37,3 +37,5 @@ class Customer:
                 f"- [{r.rental_id}] {r.vehicle.make} {r.vehicle.model} ({r.vehicle.registration_number}) | "
                 f"Status: {r.status} | Total: KSh {r.calculate_total():,.2f} | Paid: {r.is_paid()}"
             )
+
+

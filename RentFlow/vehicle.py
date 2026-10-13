@@ -80,3 +80,7 @@ class LuxuryCar(Vehicle):
             raise ValueError("Rental days must be greater than zero.")
         subtotal = self.daily_rate * days
         return subtotal + (subtotal * self.INSURANCE_RATE)
+
+    axio = EconomyCar("KDK 123A", "Toyota", "Axio", 2020, 3000.0)
+    axio.display_details()
+    print(axio.calculate_rental_cost(5))  # Example usage
