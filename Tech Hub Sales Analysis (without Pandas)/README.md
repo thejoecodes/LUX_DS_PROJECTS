@@ -30,6 +30,7 @@ Place the CSV file either inside a `data/` subfolder (`data/electronics_sales.cs
 .
 ├── sales_analytics.py
 ├── README.md
+├── requirements.txt
 └── data/
     └── electronics_sales.csv
 ```
