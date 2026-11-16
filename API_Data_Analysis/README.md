@@ -11,6 +11,10 @@ This project retrieves sample user data from the [JSONPlaceholder Users API](htt
 - Converts the cleaned records to a pandas DataFrame and inspects its shape and column types.
 - Exports customer and city-count data as CSV files and saves a bar chart of the city distribution.
 
+## Explanation of my approach
+
+
+
 ## Requirements
 
 - Python 3.9 or newer
