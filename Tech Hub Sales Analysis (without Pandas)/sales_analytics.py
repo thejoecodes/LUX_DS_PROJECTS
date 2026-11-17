@@ -6,7 +6,9 @@ Tasks 1-7 use only the standard library. Pandas is allowed in task 8, to check y
 """
 import csv
 import math
+import io
 from pathlib import Path
+from contextlib import redirect_stdout
 
 DATA_PATH = Path("data") / "electronics_sales.csv"
 
@@ -207,73 +209,79 @@ def verify_with_pandas(path: Path, my_results: dict) -> None:
 
 
 if __name__ == "__main__":
-    # Fall back to local file if data/ subdirectory does not exist
-    csv_path = DATA_PATH if DATA_PATH.exists() else Path("electronics_sales.csv")
-
-    raw_rows = read_sales(csv_path)
-    clean_rows, skipped_rows = convert_rows(raw_rows)
-
-    tot_rev = total_revenue(clean_rows)
-    prod_rev = revenue_by(clean_rows, "product")
-    store_rev = revenue_by(clean_rows, "store")
-    payment_rev = revenue_by(clean_rows, "payment_method")
-    top3_products = top_n(prod_rev, 3)
-
-    threshold = 50_000
-    hv_sales = high_value(clean_rows, threshold)
-    # Dict comprehension counting high-value transactions per store (including 0-count stores)
-    hv_counts_by_store = {
-        store: sum(1 for row in hv_sales if row["store"] == store)
-        for store in store_rev
-    }
-
-    revenues = [row["revenue"] for row in clean_rows]
-    rev_mean = mean(revenues)
-    rev_median = median(revenues)
-    rev_min, rev_max = minimum_maximum(revenues)
-
-    # Print formatted report matching expected_report.txt
-    skipped_summary = ", ".join(f"{item['sale_id']}: {item['reason']}" for item in skipped_rows)
-
-    print("\n=== Sales report: September 2026 ===")
-    print(f"Rows read          : {len(raw_rows)}")
-    print(f"Rows used          : {len(clean_rows)}")
-    print(f"Rows skipped       : {len(skipped_rows)}   ({skipped_summary})\n")
-
-    print(f"Total revenue (KES): {tot_rev:,.2f}\n")
-
-    print("Revenue by product (KES)")
-    for product, amount in sorted(prod_rev.items(), key=lambda x: (-x[1], x[0])):
-        print(f"  {product:<22} {amount:>12,.2f}")
-
-    print("\nTop 3 products")
-    for rank, (product, amount) in enumerate(top3_products, start=1):
-        print(f"  {rank}. {product} - KES {amount:,.2f}")
-
-    print(f"\nHigh-value transactions (>= KES {threshold:,}): {len(hv_sales)}")
-    for row in hv_sales:
-        print(
-            f"  {row['sale_id']}  {row['sale_date']}  {row['store']:<18} "
-            f"{row['product']:<22} KES {row['revenue']:,.2f}"
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
+        # Fall back to local file if data/ subdirectory does not exist
+        csv_path = DATA_PATH if DATA_PATH.exists() else Path("electronics_sales.csv")
+    
+        raw_rows = read_sales(csv_path)
+        clean_rows, skipped_rows = convert_rows(raw_rows)
+    
+        tot_rev = total_revenue(clean_rows)
+        prod_rev = revenue_by(clean_rows, "product")
+        store_rev = revenue_by(clean_rows, "store")
+        payment_rev = revenue_by(clean_rows, "payment_method")
+        top3_products = top_n(prod_rev, 3)
+    
+        threshold = 50_000
+        hv_sales = high_value(clean_rows, threshold)
+        # Dict comprehension counting high-value transactions per store (including 0-count stores)
+        hv_counts_by_store = {
+            store: sum(1 for row in hv_sales if row["store"] == store)
+            for store in store_rev
+        }
+    
+        revenues = [row["revenue"] for row in clean_rows]
+        rev_mean = mean(revenues)
+        rev_median = median(revenues)
+        rev_min, rev_max = minimum_maximum(revenues)
+    
+        # Print formatted report matching expected_report.txt
+        skipped_summary = ", ".join(f"{item['sale_id']}: {item['reason']}" for item in skipped_rows)
+    
+        print("\n=== Sales report: September 2026 ===")
+        print(f"Rows read          : {len(raw_rows)}")
+        print(f"Rows used          : {len(clean_rows)}")
+        print(f"Rows skipped       : {len(skipped_rows)}   ({skipped_summary})\n")
+    
+        print(f"Total revenue (KES): {tot_rev:,.2f}\n")
+    
+        print("Revenue by product (KES)")
+        for product, amount in sorted(prod_rev.items(), key=lambda x: (-x[1], x[0])):
+            print(f"  {product:<22} {amount:>12,.2f}")
+    
+        print("\nTop 3 products")
+        for rank, (product, amount) in enumerate(top3_products, start=1):
+            print(f"  {rank}. {product} - KES {amount:,.2f}")
+    
+        print(f"\nHigh-value transactions (>= KES {threshold:,}): {len(hv_sales)}")
+        for row in hv_sales:
+            print(
+                f"  {row['sale_id']}  {row['sale_date']}  {row['store']:<18} "
+                f"{row['product']:<22} KES {row['revenue']:,.2f}"
+            )
+    
+        print("\nHigh-value sales count by store:")
+        for store, count in hv_counts_by_store.items():
+            print(f"  {store:<22} {count}")
+    
+        print("\nTransaction revenue statistics")
+        print(f"  mean   : {rev_mean:,.2f}")
+        print(f"  median : {rev_median:,.2f}")
+        print(f"  min    : {rev_min:,.2f}")
+        print(f"  max    : {rev_max:,.2f}\n")
+    
+        verify_with_pandas(
+            csv_path,
+            {
+                "total_revenue": tot_rev,
+                "revenue_by_product": prod_rev,
+                "top_3": top3_products,
+                "mean": rev_mean,
+                "median": rev_median,
+            },
         )
-
-    print("\nHigh-value sales count by store:")
-    for store, count in hv_counts_by_store.items():
-        print(f"  {store:<22} {count}")
-
-    print("\nTransaction revenue statistics")
-    print(f"  mean   : {rev_mean:,.2f}")
-    print(f"  median : {rev_median:,.2f}")
-    print(f"  min    : {rev_min:,.2f}")
-    print(f"  max    : {rev_max:,.2f}\n")
-
-    verify_with_pandas(
-        csv_path,
-        {
-            "total_revenue": tot_rev,
-            "revenue_by_product": prod_rev,
-            "top_3": top3_products,
-            "mean": rev_mean,
-            "median": rev_median,
-        },
-    )
+    report_text = buffer.getvalue()
+    print(report_text, end="")  # Still prints to your terminal
+    Path("output/sales_report.txt").write_text(report_text, encoding="utf-8")
+    

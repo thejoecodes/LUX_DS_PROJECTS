@@ -33,6 +33,8 @@ Place the CSV file either inside a `data/` subfolder (`data/electronics_sales.cs
 ├── requirements.txt
 └── data/
     └── electronics_sales.csv
+└── output/
+    └── sales_report.txt
 ```
 
 ### Execution
